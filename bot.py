@@ -10,7 +10,9 @@ load_dotenv()
 
 BOT_NAME = '@safeTextAPIServiceBot'
 TOKEN = os.getenv("BOT_TOKEN", "8430076694:AAFQrHacsjjNwYfculoxUdRjYAd-gwoc_SY")
-APIKEY = os.getenv("APIKEY", "")          # <- moved to env var
+APIKEY = os.getenv("APIKEY", "safe_00227e91d33fc91b177784dcb6fae668baa335990a4a9eb4")  
+print(f"Loaded APIKEY?{APIKEY} {'Yes'  if APIKEY else 'No'}")
+
 ENDPOINT = os.getenv("ENDPOINT", "https://mogestesema-safe-text-model.hf.space/analyze")
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
