@@ -33,7 +33,7 @@ def analyze_text(text: str) -> dict | None:
     payload = {'text': text}
 
     try:
-        response = requests.post(ENDPOINT, json=payload, headers=headers, timeout=1000)
+        response = requests.post(ENDPOINT, json=payload, headers=headers, timeout=20)
         response.raise_for_status()
         return response.json()
     except requests.RequestException as e:   # ✅ correct exception for requests
@@ -107,6 +107,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 if __name__ == '__main__':
     print('Starting bot...')
     app = ApplicationBuilder().token(TOKEN).build()
+    
+   
+    app.add_error_handler(lambda update, context: print(f"Error: {context.error}"))
 
     # Add command handlers
     app.add_handler(CommandHandler('start', start_command))
