@@ -83,10 +83,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             average_score = result.get('average', 0.0)
             profane_score = result.get('toxicity',0.0)
             obcene_score = result.get('obscene',0.0)
-
             print(f"Analyzed text: '{text}'. Average profanity score: {obcene_score:.2f}%")
             print(obcene_score)
-            if average_score > 30 or profane_score > 70 or obcene_score > 70:
+            if average_score > 20 or profane_score > 50 or obcene_score > 50:
                
                 try:
                     await message.delete()
