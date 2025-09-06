@@ -8,8 +8,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-BOT_NAME = '@safe_text_bot'
-TOKEN = os.getenv("BOT_TOKEN", "")
+BOT_NAME = '@safeTextAPIServiceBot'
+TOKEN = os.getenv("BOT_TOKEN", "8430076694:AAFQrHacsjjNwYfculoxUdRjYAd-gwoc_SY")
 APIKEY = os.getenv("APIKEY", "")          # <- moved to env var
 ENDPOINT = os.getenv("ENDPOINT", "https://mogestesema-safe-text-model.hf.space/analyze")
 
