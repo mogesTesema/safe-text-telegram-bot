@@ -2,7 +2,7 @@ from telegram import Update
 from telegram.error import Forbidden
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes , MessageHandler, filters
 import os
-import asyncio
+import async
 import requests
 from dotenv import load_dotenv
 
