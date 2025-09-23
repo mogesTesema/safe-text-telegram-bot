@@ -10,6 +10,8 @@ load_dotenv()
 
 BOT_NAME = '@safeTextAPIServiceBot'
 TOKEN = os.getenv("BOT_TOKEN", "")
+print(f"Loaded TOKEN: {repr(TOKEN)}")
+
 APIKEY = os.getenv("APIKEY","")  
 print(f"Loaded APIKEY?{APIKEY} {'Yes'  if APIKEY else 'No'}")
 
