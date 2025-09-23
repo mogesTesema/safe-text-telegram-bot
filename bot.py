@@ -2,15 +2,15 @@ from telegram import Update
 from telegram.error import Forbidden
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes , MessageHandler, filters
 import os
-import asyncio
+
 import requests
 from dotenv import load_dotenv
 
 load_dotenv()
 
 BOT_NAME = '@safeTextAPIServiceBot'
-TOKEN = os.getenv("BOT_TOKEN", "8430076694:AAFQrHacsjjNwYfculoxUdRjYAd-gwoc_SY")
-APIKEY = os.getenv("APIKEY", "safe_00227e91d33fc91b177784dcb6fae668baa335990a4a9eb4")  
+TOKEN = os.getenv("BOT_TOKEN", "")
+APIKEY = os.getenv("APIKEY","")  
 print(f"Loaded APIKEY?{APIKEY} {'Yes'  if APIKEY else 'No'}")
 
 ENDPOINT = os.getenv("ENDPOINT", "https://mogestesema-safe-text-model.hf.space/analyze")
@@ -38,7 +38,7 @@ def analyze_text(text: str) -> dict | None:
         response = requests.post(ENDPOINT, json=payload, headers=headers, timeout=20)
         response.raise_for_status()
         return response.json()
-    except requests.RequestException as e:   # ✅ correct exception for requests
+    except requests.RequestException as e:   
         print(f"Error making request to profanity API: {e}")
         return None
     except Exception as e:
