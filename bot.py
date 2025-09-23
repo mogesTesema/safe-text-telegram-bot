@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BOT_NAME = '@safeTextAPIServiceBot'
-TOKEN = os.getenv("FINALBOTTOKEN", "")
+TOKEN = os.getenv("FINALBOTTOKEN", "8223753740:AAHESAQgKCfWEP_YbWxkDo104hcB9fGF0G8")
 print(f"Loaded TOKEN: {repr(TOKEN)}")
 
 APIKEY = os.getenv("APIKEY","")  
