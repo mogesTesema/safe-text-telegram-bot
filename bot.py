@@ -9,10 +9,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BOT_NAME = '@safeTextAPIServiceBot'
-TOKEN = os.getenv("FINALBOTTOKEN", "8223753740:AAHESAQgKCfWEP_YbWxkDo104hcB9fGF0G8")
+TOKEN = "8223753740:AAHESAQgKCfWEP_YbWxkDo104hcB9fGF0G8"
 print(f"Loaded TOKEN: {repr(TOKEN)}")
 
-APIKEY = os.getenv("APIKEY","")  
+APIKEY = "safe_96074a0434e3dbb2a1acb7235c339e052a8f92bf03e06d2c"
 print(f"Loaded APIKEY?{APIKEY} {'Yes'  if APIKEY else 'No'}")
 
 ENDPOINT = os.getenv("ENDPOINT", "https://mogestesema-safe-text-model.hf.space/analyze")
