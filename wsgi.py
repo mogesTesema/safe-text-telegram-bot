@@ -1,4 +1,7 @@
-import requests, threading, time, os
+import os
+import time
+import threading
+import requests
 from flask import Flask
 from bot import main  # import your main function from bot.py
 
@@ -8,8 +11,9 @@ app = Flask(__name__)
 def home():
     return "✅ Safe Text API Bot is running on Render!"
 
+# ✅ Background self-ping to keep service awake
 def self_ping():
-    url = "https://safe-text-telegram-bot-1.onrender.com"
+    url = "https://safe-text-telegram-bot-1.onrender.com"  # replace with your Render URL
     if not url:
         return
     while True:
@@ -17,11 +21,16 @@ def self_ping():
             requests.get(url)
         except Exception as e:
             print("Ping failed:", e)
-        time.sleep(600) 
+        time.sleep(600)  # every 10 minutes
 
-# Run your Telegram bot in a background thread
-threading.Thread(target=main, daemon=True).start()
-threading.Thread(target=self_ping,daemon=True).start()
+# ✅ Safe delayed bot start (prevents Telegram 409 conflict)
+def start_bot_safely():
+    time.sleep(5)  # wait a few seconds to let Flask start
+    main()  # run your bot's main polling loop
+
+# ✅ Start both background threads
+threading.Thread(target=start_bot_safely, daemon=True).start()
+threading.Thread(target=self_ping, daemon=True).start()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
