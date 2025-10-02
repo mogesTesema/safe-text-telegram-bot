@@ -16,9 +16,11 @@ from telegram.ext import (
 load_dotenv()
 
 BOT_NAME = "@safeTextAPIServiceBot"
-TOKEN = os.getenv("BOT_TOKEN")
-APIKEY = os.getenv("API_KEY")
-ENDPOINT = os.getenv("ENDPOINT", "https://mogestesema-safe-text-model.hf.space/analyze")
+TOKEN = os.environ.get("BOT_TOKEN")   # Must be set in Railway Production env
+APIKEY = os.environ.get("API_KEY")    # Must be set in Railway Production env
+ENDPOINT = os.environ.get(
+    "ENDPOINT", "https://mogestesema-safe-text-model.hf.space/analyze"
+)
 
 # ─── Logging Setup ───────────────────────────────────────────────────────────
 logging.basicConfig(
