@@ -1,127 +1,159 @@
-from telegram import Update
-from telegram.error import Forbidden
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes , MessageHandler, filters
 import os
-
+import logging
 import requests
 from dotenv import load_dotenv
+from telegram import Update
+from telegram.error import Forbidden
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    ContextTypes,
+    MessageHandler,
+    filters,
+    )
 
+# ─── Load Environment Variables ──────────────────────────────────────────────
 load_dotenv()
 
-BOT_NAME = '@safeTextAPIServiceBot'
-TOKEN = "8223753740:AAHESAQgKCfWEP_YbWxkDo104hcB9fGF0G8"
-print(f"Loaded TOKEN: {repr(TOKEN)}")
-
-APIKEY = "safe_96074a0434e3dbb2a1acb7235c339e052a8f92bf03e06d2c"
-print(f"Loaded APIKEY?{APIKEY} {'Yes'  if APIKEY else 'No'}")
-
+BOT_NAME = "@safeTextAPIServiceBot"
+TOKEN = os.getenv("BOT_TOKEN")
+APIKEY = os.getenv("API_KEY")
 ENDPOINT = os.getenv("ENDPOINT", "https://mogestesema-safe-text-model.hf.space/analyze")
 
+# ─── Logging Setup ───────────────────────────────────────────────────────────
+logging.basicConfig(
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    level=logging.INFO,
+)
+logger = logging.getLogger(__name__)
+
+if not TOKEN or not APIKEY:
+    raise ValueError("Missing BOT_TOKEN or API_KEY in environment variables.")
+
+logger.info("✅ Bot initialized successfully")
+
+# ─── Commands ────────────────────────────────────────────────────────────────
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        'Hello! I am a profanity detection bot. '
-        'Add me to your group chat and make me an admin to keep it clean.'
+        "👋 Hello! I’m SafeTextAPIServiceBot.\n"
+        "Add me to your group and give me admin rights (delete messages) — "
+        "I’ll help keep your chat clean and friendly!"
     )
+
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-   
     await update.message.reply_text(
-        'I can automatically detect and delete profane messages in a group chat. '
-        'For me to work, you need to add me to the group and grant me admin privileges, '
-        'specifically the "Delete messages" permission.'
+        "🛡 I detect and delete toxic or harmful messages.\n\n"
+        "⚙️ To get started:\n"
+        "1️⃣ Add me to your group\n"
+        "2️⃣ Grant me admin rights with 'Delete Messages'\n\n"
+        "I’ll take care of the rest!"
     )
 
 
+# ─── Text Analysis ───────────────────────────────────────────────────────────
 def analyze_text(text: str) -> dict | None:
-    headers = {'x-api-key': APIKEY}
-    payload = {'text': text}
+    """Send message text to API for toxicity analysis."""
+    headers = {"x-api-key": APIKEY}
+    payload = {"text": text}
 
     try:
-        response = requests.post(ENDPOINT, json=payload, headers=headers, timeout=20)
+        response = requests.post(ENDPOINT, json=payload, headers=headers, timeout=10)
         response.raise_for_status()
         return response.json()
-    except requests.RequestException as e:   
-        print(f"Error making request to profanity API: {e}")
-        return None
+    except requests.Timeout:
+        logger.error("⏰ API request timed out.")
+    except requests.RequestException as e:
+        logger.error(f"🌐 Request error: {e}")
     except Exception as e:
-        print(f"Unexpected error during API call: {e}")
-        return None
+        logger.exception(f"Unexpected error during API call: {e}")
+    return None
 
 
-
-
-
-
-
-
-def handle_response(text: str)-> str:
-    if 'hello' in text:
-        return 'hellp'
-    return 'shut up'
-
-async def handle_message(update:Update,context:ContextTypes.DEFAULT_TYPE):
-    message_type = update.message.chat.type
-    text = update.message.text
-
-    print(f'User {update.message.chat.id} in {message_type}: {text}')
-
-
+# ─── Message Handling ────────────────────────────────────────────────────────
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle incoming text messages in groups."""
     message = update.message
     if not message or not message.text:
         return
 
-    message_type = message.chat.type
-    text = message.text
+    user = message.from_user
+    chat_type = message.chat.type
+    text = message.text.strip()
 
-    print(f'User {message.from_user.id} in {message_type}: "{text}"')
+    logger.info(f"📩 Message from {user.id} in {chat_type}: {text}")
 
-    # Only process messages in group chats
-    if message_type in ['group', 'supergroup']:
-        api_response = analyze_text(text)
+    if chat_type not in ("group", "supergroup"):
+        return  # ignore private chats
 
-        if api_response and api_response.get('success'):
-            result = api_response.get('result', {})
-            average_score = result.get('average', 0.0)
-            profane_score = result.get('toxicity',0.0)
-            obcene_score = result.get('obscene',0.0)
-            print(f"Analyzed text: '{text}'. Average profanity score: {obcene_score:.2f}%")
-            print(obcene_score)
-            if average_score > 20 or profane_score > 50 or obcene_score > 50:
-               
-                try:
-                    await message.delete()
-                    user = message.from_user
-                    warning_text = (
-                        f"@{user.username} (or {user.first_name}), "
-                        f"your message was deleted for containing inappropriate language."
-                    )
-                    await context.bot.send_message(message.chat.id, warning_text)
-                    print(f"Deleted a profane message from user {user.id} in chat {message.chat.id}")
-                except Forbidden:
-                    print(
-                        f"Error: Could not delete message in chat {message.chat.id}. "
-                        f"The bot needs to be an admin with 'Delete messages' permission."
-                    )
-                except Exception as e:
-                    print(f"An error occurred while deleting a message: {e}")
+    # Call external toxicity API
+    api_response = analyze_text(text)
+    if not api_response:
+        logger.warning("⚠️ No response from analysis API.")
+        return
 
+    result = api_response.get("result", {})
+    avg_score = result.get("average", 0.0)
+    toxicity = result.get("toxicity", 0.0)
+    obscene = result.get("obscene", 0.0)
 
-if __name__ == '__main__':
-    print('Starting bot...')
+    logger.info(
+        f"Analyzed '{text[:30]}...' | avg={avg_score:.2f}, toxic={toxicity:.2f}, obscene={obscene:.2f}"
+    )
+
+    # Delete messages above threshold
+    # Delete messages above threshold
+    # Delete messages above threshold
+    if avg_score > 20 or toxicity > 50 or obscene > 50:
+        try:
+            await message.delete()
+            username = f"@{user.username}" if user.username else user.first_name or "this user"
+
+            warning_text = (
+                f"🚫 Your recent message in {message.chat.title or 'this group'} "
+                "was deleted because it contained toxic or inappropriate language.\n\n"
+                "⚠️ Please follow community guidelines to keep the chat positive."
+            )
+
+            try:
+                # Try to send private warning
+                await context.bot.send_message(chat_id=user.id, text=warning_text)
+                logger.info(f"Sent private warning to {user.id}")
+            except Forbidden:
+                # Only log if DM fails; optionally send a **very brief notice**
+                logger.warning(f"Cannot DM user {user.id}. They might have blocked the bot.")
+                # Optional: only send if you really need minimal notice
+                # await context.bot.send_message(chat_id=message.chat.id,
+                #    text=f"⚠️ A message from {username} was removed.")
+
+            logger.info(f"🧹 Deleted message from {user.id} in chat {message.chat.id}")
+
+        except Forbidden:
+            logger.error(
+                f"❌ Missing permissions in chat {message.chat.id}. "
+                "Please grant 'Delete Messages' admin permission."
+            )
+        except Exception as e:
+            logger.exception(f"Error deleting message: {e}")
+
+# ─── Main Entry ──────────────────────────────────────────────────────────────
+def main():
+    """Start the bot."""
+    logger.info("🚀 Starting SafeTextAPIServiceBot...")
+
     app = ApplicationBuilder().token(TOKEN).build()
-    
-   
-    app.add_error_handler(lambda update, context: print(f"Error: {context.error}"))
+    app.add_error_handler(lambda update, context: logger.error(context.error))
 
-    # Add command handlers
-    app.add_handler(CommandHandler('start', start_command))
-    app.add_handler(CommandHandler('help', help_command))
+    # Commands
+    app.add_handler(CommandHandler("start", start_command))
+    app.add_handler(CommandHandler("help", help_command))
 
-    # Add message handler
-    # This handler will process all text messages that are not commands
+    # Message handler (non-command text)
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    print('Polling...')
-    # Start the bot
-    app.run_polling()
+    logger.info("🤖 Bot is now polling...")
+    app.run_polling(stop_signals=None)
+
+
+if __name__ == "__main__":
+    main()
